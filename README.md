@@ -258,11 +258,15 @@ chunk's cosine similarity is below `MIN_RELEVANCE_SCORE` (0.25), the system retu
 not-enough-info answer *without ever calling the LLM*, so out-of-corpus questions
 ("what's the football schedule?") fail closed instead of hallucinating.
 
-**How source attribution is surfaced.** Every grounded response carries inline `[n]`
-citations in the answer text **plus** a de-duplicated **Sources** list (title, source
-type, original source, and similarity score), and the UI's "Retrieved context" panel
-shows each underlying chunk with its similarity score — so a reader can trace any claim
-back to the exact student post it came from.
+**How source attribution is surfaced.** Attribution is **programmatically guaranteed**, not
+left to the LLM: `_format_sources()` builds the **Sources** list directly from the retrieved
+chunks (title, source type, original source, similarity score), so a response always names
+its documents even if the model forgets to cite. The numbered context items map to sources
+by `_format_sources` grouping chunks per document and keeping the **full list of citation
+numbers** for each — so *every* inline `[n]` the model emits resolves to a listed source,
+even when one document supplied several cited chunks (e.g. `[1][2][3] Meal Plan Megathread`).
+The UI's "Retrieved context" panel additionally shows each underlying chunk with its score,
+so a reader can trace any claim back to the exact student post it came from.
 
 ---
 
@@ -273,27 +277,28 @@ inline `[n]` citations and the Sources list on every grounded answer.
 
 **Example 1 — "Is the unlimited meal plan worth it compared to the block plan?"**
 > Some students say the unlimited meal plan is not worth it, as they averaged around 10-12
-> swipes per week, which is the Block 175 sweet spot, saving around $650 [2][4]. Others
+> swipes per week, which is the Block 175 sweet spot, saving around $650 [2, 4]. Others
 > argue that the unlimited plan can be valuable if you have a high visit frequency, not
-> just meal count, such as grabbing coffee and snacks between classes [3]. However, some
-> students consider the unlimited plan a "tax on optimism" about their morning routines [4].
-> Ultimately, it depends on individual eating habits, with commuters recommending the
-> Commuter 80 plan with dining dollars [2].
+> just meal count, such as swiping in for coffee and snacks between classes [3]. However,
+> some students consider the unlimited plan a "tax on optimism" about their morning routine,
+> as they often don't make it to breakfast [4]. Ultimately, it depends on individual eating
+> habits, with commuters recommending the Commuter 80 plan [2].
 >
-> **Sources:** [1] Meal Plan Megathread — unlimited vs. block vs. commuter (forum_thread)
+> **Sources:** [1][2][3][4] Meal Plan Megathread — unlimited vs. block vs. commuter (forum_thread)
 
 Note how it surfaces the *disagreement* between students rather than flattening it — the
-grounding prompt explicitly asks for the range of opinions.
+grounding prompt explicitly asks for the range of opinions. All four cited chunks come from
+the one meal-plan thread, so every inline number maps to that source.
 
 **Example 2 — "What late-night food is available after the dining halls close?"**
 > After the dining halls close, there are several late-night food options available. On
 > campus, North Quad Dining is open till midnight on weeknights for hot food [1]. The
 > Marketplace grab-and-go fridge and convenience corner stay open late… [1][4]. The
-> convenience store in the student union is open 24/7-ish, till around 1am… [2]. Off
+> convenience store in the student union is open 24/7-ish, until around 1am… [2]. Off
 > campus, options include Moonlight Diner, a 24-hour diner [2][3], Slice Night Pizza…
 > open till 3am on weekends [2], and food trucks on College Ave… till ~1am on weekends [2][3].
 >
-> **Sources:** [1] Where to get food after the dining halls close (discord) · [4] The
+> **Sources:** [1][2][3] Where to get food after the dining halls close (discord) · [4] The
 > Marketplace — food court reviews (forum_thread)
 
 **Out-of-scope query (refusal) — "What is the football schedule this season?"**

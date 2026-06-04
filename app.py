@@ -98,8 +98,9 @@ def render_result(result: dict, search_query: str | None = None) -> None:
     if result.get("sources"):
         st.markdown("**Sources**")
         for s in result["sources"]:
+            label = "".join(f"[{c}]" for c in s["citations"])
             st.markdown(
-                f"- **[{s['citation']}] {s['title']}** — _{s['source_type']}_, "
+                f"- **{label} {s['title']}** — _{s['source_type']}_, "
                 f"{s['source']} (similarity {s['score']:.2f})"
             )
 

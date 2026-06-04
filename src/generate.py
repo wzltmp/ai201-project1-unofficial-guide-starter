@@ -25,7 +25,8 @@ Rules:
 1. Answer using ONLY the information in the numbered CONTEXT below. Do not use any \
 outside or prior knowledge, even if you think you know the answer.
 2. Cite your sources inline with bracketed numbers like [1] or [2], matching the \
-numbered context items you used. Every claim should carry a citation.
+numbered context items you used. Every claim should carry a citation. Cite only the \
+specific items you actually used — do NOT append a list of all source numbers at the end.
 3. The documents are opinions from different students and may disagree. When they \
 do, report the range of views ("some students say X, others Y") and cite each — \
 do not flatten it into one false consensus.
@@ -49,20 +50,33 @@ def build_context(chunks: list[dict]) -> str:
 
 
 def _format_sources(chunks: list[dict]) -> list[dict]:
-    """De-duplicate retrieved chunks down to a per-document source list for display."""
-    seen: dict[str, dict] = {}
+    """Group retrieved chunks into a per-document source list for display.
+
+    The context numbers chunks [1..k] and the model cites those per-chunk numbers, but
+    several chunks often come from the same document. We group by document and keep the
+    full list of citation numbers that map to it, so EVERY inline [n] in the answer
+    resolves to a source — even when one document supplied multiple cited chunks.
+    """
+    grouped: dict[str, dict] = {}
     for i, chunk in enumerate(chunks, start=1):
         key = chunk["filename"]
-        if key not in seen:
-            seen[key] = {
-                "citation": i,
+        if key not in grouped:
+            grouped[key] = {
+                "citations": [i],
                 "title": chunk["title"],
                 "source": chunk["source"],
                 "source_type": chunk["source_type"],
                 "filename": chunk["filename"],
-                "score": chunk["score"],
+                "score": chunk["score"],  # best (first/highest) similarity for this doc
             }
-    return list(seen.values())
+        else:
+            grouped[key]["citations"].append(i)
+    return list(grouped.values())
+
+
+def _citation_label(citations: list[int]) -> str:
+    """Render a source's citation numbers as ``[1][2]``."""
+    return "".join(f"[{c}]" for c in citations)
 
 
 def generate_answer(query: str, chunks: list[dict]) -> str:
@@ -178,4 +192,4 @@ if __name__ == "__main__":
     print(result["answer"])
     print("\nSources:")
     for s in result["sources"]:
-        print(f"  [{s['citation']}] {s['title']} ({s['source']})")
+        print(f"  {_citation_label(s['citations'])} {s['title']} ({s['source']})")
