@@ -107,6 +107,7 @@ def hybrid_retrieve(
                 "title": rec["title"],
                 "source": rec["source"],
                 "source_type": rec["source_type"],
+                "url": rec.get("url", ""),
                 "filename": rec["filename"],
                 "score": round(rrf[chunk_id], 4),  # RRF score (not cosine)
                 "rank": rank + 1,

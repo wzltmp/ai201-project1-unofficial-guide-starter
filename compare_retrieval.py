@@ -14,12 +14,13 @@ from src import config
 from src.hybrid import hybrid_retrieve
 from src.retrieve import retrieve
 
-# An extra keyword-heavy probe: this is the documented failure case, where the clean
-# labeled price list lives in one specific chunk that dense search doesn't always rank top.
+# An extra probe: the documented failure case. "North Campus" should resolve to Bursley
+# (the North Campus hall), but dense search conflates it with the "North Quad" review on
+# the shared "North" token. Does BM25's exact-phrase signal help anchor it?
 EXTRA = [
     {
-        "question": "How much does the unlimited meal plan cost per semester?",
-        "expected_source": "05-meal-plan-megathread.md",
+        "question": "What is the best dining hall on North Campus?",
+        "expected_source": "04-bursley-review.md",
     }
 ]
 

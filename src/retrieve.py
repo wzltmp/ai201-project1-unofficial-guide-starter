@@ -62,6 +62,7 @@ def retrieve(
                 "title": meta.get("title", "Unknown source"),
                 "source": meta.get("source", ""),
                 "source_type": meta.get("source_type", ""),
+                "url": meta.get("url", ""),
                 "filename": meta.get("filename", ""),
                 "score": round(1.0 - distance, 4),  # cosine distance -> similarity
                 "rank": rank + 1,

@@ -118,6 +118,7 @@ def chunk_documents(
                     "title": doc["title"],
                     "source": doc["source"],
                     "source_type": doc["source_type"],
+                    "url": doc.get("url", ""),
                     "chunk_index": i,
                 }
             )

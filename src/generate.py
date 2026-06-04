@@ -66,6 +66,7 @@ def _format_sources(chunks: list[dict]) -> list[dict]:
                 "title": chunk["title"],
                 "source": chunk["source"],
                 "source_type": chunk["source_type"],
+                "url": chunk.get("url", ""),
                 "filename": chunk["filename"],
                 "score": chunk["score"],  # best (first/highest) similarity for this doc
             }

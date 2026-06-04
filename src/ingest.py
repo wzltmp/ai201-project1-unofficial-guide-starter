@@ -6,9 +6,10 @@ markdown noise, and returns clean, structured records ready for chunking.
 Each document starts with a lightweight header block::
 
     ---
-    title: Hillside Commons — honest reviews
-    source_type: forum_thread
-    source: r/BrightwoodU (simulated)
+    title: South Quad dining hall review
+    source_type: review
+    source: The Michigan Daily
+    url: https://www.michigandaily.com/arts/campus-culture-reviews-dining-hall-edition/
     ---
     <body text...>
 
@@ -134,6 +135,7 @@ def load_documents(documents_dir: Path | str = config.DOCUMENTS_DIR) -> list[dic
                 "title": meta.get("title", path.stem),
                 "source": meta.get("source", path.stem),
                 "source_type": meta.get("source_type", "document"),
+                "url": meta.get("url", ""),
                 "text": text,
             }
         )

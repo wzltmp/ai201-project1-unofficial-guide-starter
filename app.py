@@ -34,8 +34,8 @@ def _warm_up():
 
 st.title("🎓 The Unofficial Guide")
 st.caption(
-    "Ask about dining & campus life at Brightwood University. Answers are grounded "
-    "in real student reviews, forum threads, and Discord chats — with citations."
+    "Ask about campus dining at the University of Michigan. Answers are grounded in real "
+    "collected sources — Michigan Daily reviews, M|Dining info, and dining guides — with cited links."
 )
 
 chunk_count, available_source_types = _warm_up()
@@ -75,10 +75,10 @@ with st.sidebar:
         st.rerun()
     st.markdown(
         "**Try asking:**\n"
-        "- Which dining hall is best for vegan options?\n"
-        "- _(follow-up)_ Is it open late?\n"
-        "- Is the unlimited meal plan worth it?\n"
-        "- What's open after the dining halls close?"
+        "- Which dining hall has the only kosher kitchen on campus?\n"
+        "- What is Mosher-Jordan (Mojo) known for?\n"
+        "- Why do students criticize Bursley?\n"
+        "- _(follow-up)_ Is it good for vegans?"
     )
 
 
@@ -99,9 +99,10 @@ def render_result(result: dict, search_query: str | None = None) -> None:
         st.markdown("**Sources**")
         for s in result["sources"]:
             label = "".join(f"[{c}]" for c in s["citations"])
+            src = f"[{s['source']}]({s['url']})" if s.get("url") else s["source"]
             st.markdown(
                 f"- **{label} {s['title']}** — _{s['source_type']}_, "
-                f"{s['source']} (similarity {s['score']:.2f})"
+                f"{src} (similarity {s['score']:.2f})"
             )
 
     with st.expander(f"🔎 Retrieved context ({len(result['chunks'])} chunks)"):
@@ -128,7 +129,7 @@ for msg in st.session_state.messages:
         else:
             render_result(msg["result"], msg.get("search_query"))
 
-prompt = st.chat_input("Ask about dining & campus life…")
+prompt = st.chat_input("Ask about U-M campus dining…")
 if prompt and prompt.strip():
     use_hybrid = retrieval_mode.startswith("Hybrid")
     source_types = source_filter or None  # empty multiselect = search all sources

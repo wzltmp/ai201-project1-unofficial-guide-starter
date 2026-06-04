@@ -10,13 +10,11 @@ failure case: does the top retrieved chunk keep "Unlimited … $2,950" intact?
 
 from __future__ import annotations
 
-import re
 import uuid
 
 import chromadb
 
 from evaluate import TEST_CASES
-from src import config
 from src.chunk import chunk_documents, chunk_text, fixed_chunk_text
 from src.embed_store import embed_texts
 from src.ingest import load_documents
@@ -30,8 +28,6 @@ STRATEGIES = [
     ("paragraph 1000/150 (larger)", chunk_text, 1000, 150),
     ("naive fixed 700/100", fixed_chunk_text, 700, 100),
 ]
-
-FAILURE_QUERY = "How much does the unlimited meal plan cost per semester?"
 
 
 def build_ephemeral(chunks: list[dict]):
@@ -69,34 +65,12 @@ def query(col, q: str, top_k: int = TOP_K) -> list[dict]:
     ]
 
 
-def failure_case_accuracy(col, runs: int = 3) -> str:
-    """Generate the failure-case answer `runs` times under this chunking and score it.
-
-    The answer is "correct" iff it states the unlimited price ($2,950) and does NOT
-    also assert $2,300 (the Block 175 price it tends to conflate). Requires a Groq key;
-    returns "n/a" without one. This is the real, end-to-end test of whether a chunking
-    strategy fixes the documented failure — string proxies can't capture it.
-    """
-    if not config.GROQ_API_KEY:
-        return "n/a (no key)"
-    from src.generate import generate_answer
-
-    chunks = query(col, FAILURE_QUERY)
-    correct = 0
-    for _ in range(runs):
-        ans = generate_answer(FAILURE_QUERY, chunks)
-        if "2,950" in ans and "2,300" not in ans:
-            correct += 1
-    return f"{correct}/{runs}"
-
-
 def main() -> None:
     docs = load_documents()
     print(f"Comparing {len(STRATEGIES)} chunking strategies on {len(TEST_CASES)} "
           f"questions (top-{TOP_K})\n")
-    print(f"{'strategy':<32}{'#chunks':<9}{'recall@4':<10}{'avg rank':<10}"
-          f"{'failure-case answer correct'}")
-    print("-" * 90)
+    print(f"{'strategy':<32}{'#chunks':<9}{'recall@4':<10}{'avg rank':<10}")
+    print("-" * 62)
 
     for label, chunker, size, overlap in STRATEGIES:
         chunks = chunk_documents(docs, chunker=chunker, chunk_size=size, overlap=overlap)
@@ -113,15 +87,13 @@ def main() -> None:
             else:
                 rank_sum += TOP_K + 1  # penalty for a miss
         avg_rank = rank_sum / len(TEST_CASES)
-        acc = failure_case_accuracy(col)
 
         print(f"{label:<32}{len(chunks):<9}{f'{hits}/{len(TEST_CASES)}':<10}"
-              f"{avg_rank:<10.2f}{acc}")
+              f"{avg_rank:<10.2f}")
 
-    print("-" * 90)
-    print("Lower avg rank = expected doc retrieved higher.")
-    print("'failure-case answer correct' = times (of 3) the unlimited-cost answer gave")
-    print("$2,950 without conflating $2,300 — the end-to-end test of the documented bug.")
+    print("-" * 62)
+    print("Lower avg rank = expected doc retrieved higher. With short excerpts each")
+    print("document is ~one chunk, so chunk size has little effect on this corpus.")
 
 
 if __name__ == "__main__":

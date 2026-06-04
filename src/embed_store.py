@@ -77,6 +77,7 @@ def build_store(chunks: list[dict]) -> chromadb.Collection:
             "title": c["title"],
             "source": c["source"],
             "source_type": c["source_type"],
+            "url": c.get("url", ""),
             "filename": c["filename"],
             "doc_id": c["doc_id"],
             "chunk_index": c["chunk_index"],
