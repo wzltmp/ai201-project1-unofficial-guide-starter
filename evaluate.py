@@ -27,29 +27,29 @@ from src.retrieve import retrieve
 # a correct answer to contain.
 TEST_CASES = [
     {
-        "question": "What do students say about wait times at Hillside Commons during lunch?",
-        "expected_source": "01-hillside-commons-reviews.md",
-        "expected_keywords": ["lunch", "line", "wait", "11:30"],
+        "question": "Which University of Michigan dining hall has the only kosher kitchen on campus?",
+        "expected_source": "01-south-quad-review.md",
+        "expected_keywords": ["South Quad", "kosher"],
     },
     {
-        "question": "Which dining hall is best for vegan options?",
-        "expected_source": "02-north-quad-dining-reviews.md",
-        "expected_keywords": ["North Quad", "stir-fry", "tofu", "vegan"],
+        "question": "Why do students criticize the Bursley dining hall?",
+        "expected_source": "04-bursley-review.md",
+        "expected_keywords": ["Bursley", "overwhelming", "four"],
     },
     {
-        "question": "Is the unlimited meal plan worth it compared to the block plan?",
-        "expected_source": "05-meal-plan-megathread.md",
-        "expected_keywords": ["unlimited", "block", "swipe", "worth"],
+        "question": "What is the Mosher-Jordan (Mojo) dining hall known for?",
+        "expected_source": "02-mosher-jordan-mojo-review.md",
+        "expected_keywords": ["Mojo", "cookie", "dessert"],
     },
     {
-        "question": "Where's the best quiet place to study late at night?",
-        "expected_source": "10-best-study-spots.md",
-        "expected_keywords": ["Tewell", "quiet", "floor", "Engineering"],
+        "question": "How much is a single dinner at a U-M dining hall, and is the Unlimited plan worth it?",
+        "expected_source": "08-meal-plans-blue-bucks.md",
+        "expected_keywords": ["15.25", "unlimited", "daily"],
     },
     {
-        "question": "What late-night food is available after the dining halls close?",
-        "expected_source": "08-late-night-food.md",
-        "expected_keywords": ["North Quad", "midnight", "Moonlight", "convenience"],
+        "question": "Where can students find gluten-free options in U-M dining halls?",
+        "expected_source": "11-gluten-free-allergies.md",
+        "expected_keywords": ["gluten-free", "South Quad", "Bursley"],
     },
 ]
 
