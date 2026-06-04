@@ -100,8 +100,10 @@ ask the follow-up **"Is it good for vegans?"** Point to the "🔎 searched for:"
 **Action:** type **"What time does South Quad dining hall close?"**
 
 > "One more — a question the documents don't cover. My sources are excerpts; they don't include
-> hours. So instead of inventing a closing time, the system **refuses**: *'I don't have enough
-> information.'* For a tool people should trust, not answering is the right answer."
+> hours. Notice the system actually *retrieved* South Quad chunks — but none of them state a
+> closing time, so instead of inventing one it **refuses**: *'I don't have enough information.'*
+> And it shows **no sources**, because there's nothing to cite. For a tool people should trust,
+> not answering is the right answer."
 
 ---
 

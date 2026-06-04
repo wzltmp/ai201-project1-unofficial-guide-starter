@@ -176,6 +176,13 @@ def answer_question(
         }
 
     answer = generate_answer(query, chunks)
+
+    # If the guard let context through but the model still grounded-refuses (e.g. an
+    # on-topic question the excerpts don't actually answer), treat it like a refusal:
+    # no sources, grounded=False — so a refusal never displays a contradictory source list.
+    if NOT_ENOUGH_INFO.rstrip(".").lower() in answer.lower():
+        return {"answer": answer, "sources": [], "chunks": chunks, "grounded": False}
+
     return {
         "answer": answer,
         "sources": _format_sources(chunks),
