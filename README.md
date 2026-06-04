@@ -1,5 +1,9 @@
 # The Unofficial Guide — Project 1
 
+**Repository:** https://github.com/wzltmp/ai201-project1-unofficial-guide-starter
+(forked from the AI201 starter)
+**Demo video script:** [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md)
+
 A Retrieval-Augmented Generation (RAG) system that answers plain-language questions
 about **dining & campus life at Brightwood University** using a corpus of realistic
 student-generated documents (reviews, forum threads, Discord chats). Ask *"Which
@@ -21,6 +25,19 @@ python evaluate.py            # run the 5-question evaluation framework
 
 Retrieval (semantic search) works without an API key; only the grounded-answer
 generation step calls Groq.
+
+## Demo Video
+
+A complete, timed narration script (≈4:30, stakeholder-facing) is in
+[`DEMO_SCRIPT.md`](DEMO_SCRIPT.md). It walks through, in order:
+1. Three queries with **source citations visible** (vegan halls, meal-plan worth-it, late-night food).
+2. A query where retrieval **and** generation work well, with the relevance narrated.
+3. **Conversational memory** — a vague follow-up ("is it open late?") resolved to the right hall.
+4. The honest **failure case** narrated live (unlimited-plan price conflated across a chunk boundary).
+5. An **out-of-scope refusal** ("football schedule" → "not enough information").
+6. A walkthrough of the **evaluation report** (`python evaluate.py` → 5/5 Recall@4).
+
+> The recorded `.mp4`/`.mov` goes here once filmed (e.g. `demo.mp4` in the repo root or a shared link).
 
 ## Pipeline at a glance
 
