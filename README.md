@@ -155,53 +155,62 @@ citation points back to.
 
 ## Retrieval Test Results
 
-Three queries run through semantic retrieval (`python -m src.retrieve` / the app). Each
-shows the top returned chunks with their cosine-similarity score and source.
+Queries run through semantic retrieval (`python -m src.retrieve` / the app), top-k=4.
+ChromaDB uses **cosine distance** (lower = more similar); `retrieve()` also reports a
+`similarity = 1 − distance`. As a rule of thumb, distance < 0.5 is a strong match and
+> 0.6–0.7 is weak/off-topic. **Every top result below is < 0.35.**
 
 **Query 1: "Which dining hall is best for vegan options?"**
 
-| Score | Source document |
-|---|---|
-| 0.708 | `06-vegan-vegetarian-guide.md` |
-| 0.647 | `06-vegan-vegetarian-guide.md` |
-| 0.642 | `06-vegan-vegetarian-guide.md` |
-| 0.633 | `02-north-quad-dining-reviews.md` |
+| Distance | Similarity | Source document (chunk) |
+|---|---|---|
+| **0.292** | 0.708 | `06-vegan-vegetarian-guide.md` (#0) |
+| 0.353 | 0.647 | `06-vegan-vegetarian-guide.md` (#1) |
+| 0.358 | 0.642 | `06-vegan-vegetarian-guide.md` (#2) |
+| 0.367 | 0.633 | `02-north-quad-dining-reviews.md` (#0) |
 
 *Why these are relevant:* the top three chunks are from the dedicated vegan/vegetarian
-guide — the single most on-topic document — and the fourth is the North Quad reviews thread
-that independently praises the stir-fry/tofu station. Retrieval surfaces both the curated
-recommendation **and** the corroborating student review, which is exactly the spread a good
-answer should cite. Note semantic search ranked the *guide* above the *reviews* even though
-the question literally says "dining hall" (which appears more in the reviews) — it matched
-on meaning, not keywords.
+guide — the single most on-topic document, whose chunk #0 literally opens "North Quad Dining
+is the best dining hall for vegans and vegetarians, no contest" — and the fourth is the North
+Quad reviews thread that independently praises the stir-fry/tofu station. Retrieval surfaces
+both the curated recommendation **and** the corroborating student review, the exact spread a
+good answer should cite. Note semantic search ranked the *guide* above the *reviews* even
+though the question says "dining hall" (more frequent in the reviews) — it matched on
+meaning, not keywords.
 
-**Query 2: "Where can I study quietly late at night?"**
+**Query 2: "Where is the best quiet place to study late at night?"**
 
-| Score | Source document |
-|---|---|
-| 0.718 | `10-best-study-spots.md` |
-| 0.519 | `11-tewell-library.md` |
-| 0.513 | `11-tewell-library.md` |
-| 0.508 | `09-coffee-on-campus.md` |
+| Distance | Similarity | Source document (chunk) |
+|---|---|---|
+| **0.222** | 0.778 | `10-best-study-spots.md` (#1) |
+| 0.403 | 0.597 | `11-tewell-library.md` (#0) |
+| 0.455 | 0.545 | `10-best-study-spots.md` (#2) |
+| 0.469 | 0.531 | `11-tewell-library.md` (#1) |
 
-*Why these are relevant:* the top hit is the ranked study-spots thread (which names the
-Tewell quiet floors and the 24-hr Engineering lounge), backed by two chunks from the Tewell
-floor-by-floor guide. This is semantic matching at work — the query word "quietly" never
-appears verbatim, yet it retrieved chunks about "silence enforced" quiet floors. The 4th
-chunk (coffee) is a weaker, tangential match (late-night caffeine) and scores notably lower,
-which is the kind of soft-relevance tail that top-k naturally includes.
+*Why these are relevant:* the top hit (distance 0.222 — the strongest match in the whole
+eval set) is the study-spots chunk that names the Tewell 3rd/4th "quiet floors" and the
+24-hr Engineering lounge, backed by two chunks from the Tewell floor-by-floor guide. This is
+semantic matching at work — the query word "quiet" maps onto chunks about "silence enforced"
+floors even where the exact word differs, and all four results come from the two study-focused
+documents, none off-topic.
 
-**Query 3: "How is the coffee on campus?"**
+**Query 3: "What do students say about wait times at Hillside Commons during lunch?"**
 
-| Score | Source document |
-|---|---|
-| 0.706 | `09-coffee-on-campus.md` |
-| 0.604 | `09-coffee-on-campus.md` |
-| 0.580 | `09-coffee-on-campus.md` |
-| 0.550 | `08-late-night-food.md` |
+| Distance | Similarity | Source document (chunk) |
+|---|---|---|
+| **0.254** | 0.746 | `01-hillside-commons-reviews.md` (#1) |
+| 0.345 | 0.655 | `01-hillside-commons-reviews.md` (#0) |
+| 0.496 | 0.504 | `09-coffee-on-campus.md` (#1) |
+| 0.503 | 0.497 | `01-hillside-commons-reviews.md` (#3) |
 
-The top three all come from the coffee comparison doc (Grindhouse vs. Bean Scene); the
-late-night-food chunk appears because it mentions coffee/caffeine after hours.
+Three of the top four are the Hillside Commons reviews thread (the correct source), led by
+the chunk describing the "15 to 20 minute line" during the 12–1 lunch rush. The one outlier —
+a coffee-doc chunk at distance 0.496 — is about café *lines/wait times* (semantically near
+"wait times") but the right document still dominates, and the grounded answer cites only the
+Hillside chunks.
+
+*(All five eval queries were tested; the remaining two — meal plans and late-night food —
+likewise return their correct source at top-result distances of 0.341 and 0.259.)*
 
 ---
 
