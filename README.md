@@ -374,12 +374,32 @@ conflation, while the real corpus fails on the North Quad / North Campus embeddi
 Beyond the required pipeline. Each was planned in `planning.md` before implementation.
 
 ### 1. Hybrid Search (semantic + BM25)
-`src/hybrid.py` fuses dense and BM25 rankings with Reciprocal Rank Fusion; the app has a
-Semantic/Hybrid toggle. **Comparison** (`python compare_retrieval.py`, 5 eval questions + the
-North-Campus failure probe): semantic and hybrid both get **Recall@4 6/6** with identical
-average expected-doc rank (1.17) — on this small, clean excerpt corpus they tie, and hybrid
-does **not** rescue the failure case (an embedding-context issue, not a ranking one). An honest
-null result worth reporting.
+
+**How the scores are combined.** `src/hybrid.py` produces two rankings — dense cosine
+(ChromaDB) and lexical BM25 (`rank-bm25`) — and fuses them with **Reciprocal Rank Fusion**:
+`score(d) = Σ 1/(60 + rank_d)` summed across the two rankings, so a chunk ranked highly by
+*either* method floats to the top. RRF combines by **rank**, which sidesteps having to
+normalize the incompatible cosine- and BM25-score scales. The app has a Semantic/Hybrid toggle.
+
+**Per-query comparison** (`python compare_retrieval.py`) — expected-doc rank, lower is better:
+
+| Query (expected doc) | Semantic | Hybrid | Better |
+|---|---|---|---|
+| Kosher kitchen → south-quad | rank 2 | rank 2 | tie |
+| Criticize Bursley → bursley | rank 1 | rank 1 | tie |
+| Mojo known for → mojo | rank 1 | rank 1 | tie |
+| Single dinner / Unlimited → meal-plans | rank 1 | rank 1 | tie |
+| Gluten-free → gluten-free | rank 1 | rank 1 | tie |
+| Best on North Campus → bursley | rank 1 | rank 1 | tie |
+
+Both score **Recall@4 6/6** with identical average rank **1.17** — on these natural-language
+questions they tie, and hybrid does **not** rescue the failure case (an embedding-context
+issue, not a ranking one). **But BM25 is demonstrably active on keyword-heavy queries:** for
+the exact terms `24 Carrots`, `Blue Bucks`, `whoopie pies`, and `Signature Maize station`,
+hybrid returns a **different** 3rd-ranked chunk than semantic (the BM25 half pulls in the doc
+containing the literal phrase). The honest takeaway: hybrid changes rankings on exact-term
+queries but, on this small, topically-separated excerpt corpus, neither clearly beats the
+other — its value would grow with a larger corpus and more proper-noun queries.
 
 ### 2. Chunking Strategy Comparison
 `python compare_chunking.py` varies only the chunker over the eval set:
@@ -391,18 +411,48 @@ null result worth reporting.
 | paragraph 1000/150 (larger) | 13 | 5/5 | 1.20 |
 | naive fixed 700/100 | 20 | 5/5 | 1.20 |
 
-Because each excerpt is ~one chunk, chunk size barely moves retrieval; smaller chunks edge out
-a marginally better average rank. The honest takeaway: on a short-excerpt corpus, chunking is
-not the lever — corpus size and the embedding model are.
+**Which is better and why, tied to a specific query.** The only query whose ranking changed is
+the **kosher-kitchen** question: under the 700/100 baseline its expected doc (the South Quad
+review) lands at **rank 2**, behind the halal/kosher *guide* chunk; under **400/80** it rises
+to **rank 1**. Splitting the longer guide excerpt into smaller chunks dilutes its match so the
+more focused South Quad review chunk wins — that single move is what drops 400/80's average
+rank from 1.20 to 1.00. Every other query is rank 1 under all four strategies. The honest
+takeaway: because each short excerpt is ~one chunk, chunking barely moves retrieval here —
+corpus size and the embedding model are the real levers, not chunk size.
 
 ### 3. Metadata Filtering
 Each chunk carries `source_type` (review / opinion / news / guide). `retrieve()` and
 `hybrid_retrieve()` accept a `source_types` filter (ChromaDB `where` clause); the sidebar
-exposes it. E.g. filtering to `guide` restricts answers to the official/guide docs; an
-over-narrow filter still triggers the not-enough-info guard rather than a wrong answer.
+exposes it as a multiselect.
+
+**Visible effect — same query, with and without the filter.** Query: *"What do reviews say
+about vegetarian options?"*
+
+| | Top results returned |
+|---|---|
+| **No filter** (all sources) | `09-vegan-vegetarian.md` *(guide, 0.62)* → `01-south-quad-review.md` → `06-east-quad-review.md` → `12-campus-dining-overview.md` *(guide)* |
+| **Filter `source_type=review`** | `01-south-quad-review.md` → `06-east-quad-review.md` → `02-mosher-jordan-mojo-review.md` → `03-twigs-oxford-review.md` |
+
+The filter measurably changes retrieval: the vegan/vegetarian **guide** that dominated
+unfiltered (and the overview guide) are **excluded**, leaving only student-**review** sources —
+exactly what "what do *reviews* say" should return. An over-narrow filter still triggers the
+not-enough-info guard rather than forcing a wrong answer.
 
 ### 4. Conversational Memory
 The app is a multi-turn chat; `rewrite_followup()` rewrites a context-dependent follow-up into
-a standalone query using prior turns before retrieval (e.g. "is it good for vegans?" → "Is
-Bursley good for vegans?"), shown as "🔎 searched for: …". Grounding, citations, and the
-off-topic guard are unchanged — memory only affects the search query.
+a standalone query using prior turns *before* retrieval, shown as "🔎 searched for: …".
+
+**Multi-turn exchange (real output):**
+```
+Turn 1 — user: "Why do students criticize the Bursley dining hall?"
+         assistant: overcrowded, only four food stations vs up to ten elsewhere… [cites Bursley review]
+
+Turn 2 — user: "Is it good for vegans?"
+         🔎 searched for: "Is the Bursley dining hall good for vegans?"
+         assistant: "Some students say Bursley is a good option for vegans because it runs a
+                     dedicated vegan and vegetarian station called '24 Carrots' [1]…"
+```
+The pronoun "it" in turn 2 has no standalone referent — the system resolved it to **Bursley**
+from turn 1 (not topic overlap; the rewritten query names Bursley explicitly), then retrieved
+and answered about Bursley's vegan station. Grounding, citations, and the off-topic guard are
+unchanged — memory only affects the search query.
